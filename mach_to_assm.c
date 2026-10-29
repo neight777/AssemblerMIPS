@@ -17,9 +17,35 @@
  * @return The index of the instruction in instruction_definitions if error is not set.
  * Undefined if error is set.
  */
-static size_t find_instruction_by_code(uint32_t op_code, uint32_t funct_code, char **error);
+static size_t find_instruction_by_code(uint32_t op_code, uint32_t funct_code, char **error)
+{
+/**
+	this is meant to iterate throught the instruction code given, and checking if this the input itself is found with the list of possible opcodes, the next conditional
+	is meant to check if it belongs to a register function type. If so it will perform that check and grab that specific function that the op code belongs to. 
+	If not, it will simply return the iterator and pass through the error pointer, telling us the instruction code does not exist.
+*/ 
+	size_t i;
+	for (i = 0; i < NUM_INSTRUCTIONS; i++) // Going through each instruction definition to find a matching opcode
+	{
+		if (instruction_definitions[i].op_code == op_code)// Then check if that instruction matches the input
+		{
+			if (op_code == R_TYPE) // If the opcode represents an R_TYPE instruction
+			{
+				if (instruction_definitions[i].funct_code == funct_code) // Now checking if the function code also mathces the R_TYPE instruction code
+				{
+					return i; // returning index if both match.
+				}
+			}
+			else
+			{
+				return i; // This is for other types of instructions and will still return index as it only needs op code to match
+			}
 
-
+	}
+	}
+	*error = "undefined"; // Error Message
+	return 0;
+}
 // TODO: Add in documentation/comments since Old Jim forgot
 
 struct assm_parse_result convert_to_assembly(uint32_t inst, char **error)
