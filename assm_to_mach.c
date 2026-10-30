@@ -90,55 +90,86 @@ static size_t find_instruction_by_name(char *given_name, char **error)
 {
     size_t ins;
     bool found = false;
+
+    // Iterate through the instruction definitions to find a match for the given operation name
     for (ins = 0; ins < sizeof(instruction_definitions)
             / sizeof(struct instruction_definition); ins++) {
+
+        // Compare the given operation name with the current instruction's name        
         if (strcmp(given_name, instruction_definitions[ins].op_name) == 0) {
             found = true;
             break;
         }
     }
+
+    // If no matching instruction was found, send an error
     if (found == false)
         *error = "No instruction of given name.";
+
+    // Return index of found instruction, if not found, return array size
     return ins;
 }
 static void check_instruction_part(enum instruction_part part,
         enum assm_parse_result_type given_type, uint32_t given_val, char **error)
 {
+    //Determine what argument type is expected from the instruction
     switch (part) {
+
+    // RD, RS, RT, SA represent register fields in an instruction    
     case RD:
     case RS:
     case RT:
     case SA:
+        
+        // Make sure the argument is a register
         if (given_type != REGISTER) {
             *error = "Missing register.";
             return;
         }
+
+        // Registers must be within the 5-bit range (0-31)
         if (given_val > MAX_5_BIT) {
             *error = "Invalid register.";
             return;
         }
         break;
+
+    //IMM represents a 16-bit immediate field    
     case IMM:
+
+        // Make sure the argument is an immediate value
         if (given_type != IMMEDIATE) {
             *error = "Missing immediate.";
             return;
         }
+
+        // Make sure the immediate fits within 16 bits (0-65535)
         if (given_val > MAX_16_BIT) {
             *error = "Invalid immediate.";
             return;
         }
         break;
+
+    //TAR represnts a 26-bit jump target    
     case TAR:
+
+        // Make sure the argument is a target value
         if (given_type != TARGET) {
             *error = "Missing target.";
             return;
         }
+
+        // Make sure the target fits within 26 bits (0-67108863)
         if (given_val > MAX_26_BIT) {
             *error = "Invalid target.";
             return;
         }
         break;
+
+    //EMPTY represents no other argument in the instruction    
     case EMPTY:
+
+        // If the instruction part is EMPTY, then there should be no argument provided. If an argument is given, it's an error.
         if (given_type != NONE) {
             *error = "Too many arguments.";
             return;
