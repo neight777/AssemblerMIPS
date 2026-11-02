@@ -33,19 +33,19 @@ const struct instruction_definition instruction_definitions[] = {
     },                          // This would be read as: add $rd, $rs, $rt
 
     {
-        "ADDI",
-        I_TYPE,
-        "001000",
-        NULL,
-        { RT, RS, IMM, EMPTY }
+        "ADDI",                 // MIPS instruction name
+        I_TYPE,                 // Type of instruction (R, I, or J)
+        "001000",               // Opcode
+        NULL,                   // Funct Code (I-type instructions don't use one)
+        { RT, RS, IMM, EMPTY }  // Registers
     },
 
     {
-        "BNE",
-        I_TYPE,
-        "000101",
-        NULL,
-        { RS, RT, IMM, EMPTY }
+        "BNE",                  // MIPS instruction name
+        I_TYPE,                 // Type of instruction (R, I, or J)
+        "000101",               // Opcode
+        NULL,                   // Funct Code (I-type instructions don't use one)
+        { RS, RT, IMM, EMPTY }  // Registers
     },
 
     //TODO: Fix the bugs in the other instructions to restore functionality
