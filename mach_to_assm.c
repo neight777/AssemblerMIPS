@@ -46,24 +46,37 @@ static size_t find_instruction_by_code(uint32_t op_code, uint32_t funct_code, ch
 	*error = "undefined"; // Error Message
 	return 0;
 }
+
+
 // TODO: Add in documentation/comments since Old Jim forgot
 
-struct assm_parse_result convert_to_assembly(uint32_t inst, char **error)
+/**
+ * @brief Searches for the corresponding instruction definition and 
+ *			uses its format to populate the assembly parse result with the appropriate operand type and values.
+ *	
+ * @param inst This is instruction that will be converted 
+ * @param error Pointer to string to hold error message if an error occurs.
+ * @return The struct assm_parse_result with that has the correct instruction name with its operad types and values.
+ *			Returns the result if the instruction cannot be identified. 
+ */
+struct assm_parse_result convert_to_assembly(uint32_t inst, char **error) // Instruction size is 32bits
 {
 	*error = NULL;
+	// These are the fields from the machine code: destination, source, target , immediate.. etc
+	uint32_t rd = (inst >> 11) & MAX_5_BIT; // Desitation register
+	uint32_t rs = (inst >> 21) & MAX_5_BIT; // Source register
+	uint32_t rt = (inst >> 16) & MAX_5_BIT; // secondary-source registor
+	uint32_t sa = (inst >> 6) & MAX_5_BIT; //  shift amount
+	uint32_t imm = inst & MAX_16_BIT; // immediate value 16-bits
+	uint32_t tar = inst & MAX_26_BIT; // target value 26bit target address 
 
-	uint32_t rd = (inst >> 11) & MAX_5_BIT;
-	uint32_t rs = (inst >> 21) & MAX_5_BIT;
-	uint32_t rt = (inst >> 16) & MAX_5_BIT;
-	uint32_t sa = (inst >> 6) & MAX_5_BIT;
-	uint32_t imm = inst & MAX_16_BIT;
-	uint32_t tar = inst & MAX_26_BIT;
-
+	// The op and function code that is used to identify the instructions
 	uint32_t op_code = (inst >> 26) & MAX_6_BIT;
 	uint32_t funct_code = inst & MAX_6_BIT;
 
-	struct assm_parse_result assembly;
+	struct assm_parse_result assembly; // This struct will store the parsed assmebly instructions.
 
+	// This function call is to find the instruction using the opcode and function code.
 	size_t ins = find_instruction_by_code(op_code, funct_code, error);
 	if (*error != NULL)
 		return assembly;
@@ -72,38 +85,56 @@ struct assm_parse_result convert_to_assembly(uint32_t inst, char **error)
 	for (size_t i = 0; i < 4; i++) {
 		switch (instruction_definitions[ins].parts[i]) {
 		case RD:
-			assembly.types[i] = REGISTER;
+			assembly.types[i] = REGISTER; // If the operand type is a register, store the destination register value
 			assembly.vals[i] = rd;
 			break;
 		case RS:
-			assembly.types[i] = REGISTER;
-			assembly.vals[i] = rs;
+			assembly.types[i] = REGISTER;  
+			assembly.vals[i] = rs; // Store the first source register value
 			break;
 		case RT:
 			assembly.types[i] = REGISTER;
-			assembly.vals[i] = rt;
+			assembly.vals[i] = rt; // Store the secondary source register value
 			break;
 		case SA:
 			assembly.types[i] = REGISTER;
-			assembly.vals[i] = sa;
+			assembly.vals[i] = sa; // Store the shift amount.
 			break;
 		case IMM:
-			assembly.types[i] = IMMEDIATE;
-			assembly.vals[i] = imm;
+			assembly.types[i] = IMMEDIATE; // If operand type is an immediate value
+			assembly.vals[i] = imm; //story the immediate value
 			break;
 		case TAR:
-			assembly.types[i] = TARGET;
-			assembly.vals[i] = tar;
+			assembly.types[i] = TARGET; // If operand type is an address 
+			assembly.vals[i] = tar; // store the target address
 			break;
 		case EMPTY:
-			assembly.types[i] = NONE;
+			assembly.types[i] = NONE; // If the operand type is undefined, then store as undefined. 
 			assembly.vals[i] = UNDEFINED;
 			break;
 		}
 	}
 
-	return assembly;
+	return assembly; // This returns the complete assembly equivalent
 }
+
+
+/**
+ * @brief 
+ *  Loop through the instruction definitions, and perform two checks:
+		1. If the corresponding opcode does not exist for that instruction 
+		2. If the corresponding function code does not exist for that instruction.
+	
+	After, if the op and function codes are found, we will return that instruction.
+	If not, throw the error string. 
+
+ * @param op_code op-code of the machine instructions
+ * @param funct_code The function code of the machine instructions
+ * @param error error string.
+ * @return size_t Returns the index of the corresponding instruction definition within the instruction_definitions. 
+ *					If not found, it will return the number of the instruction definitions.
+ */
+
 
 static size_t find_instruction_by_code(uint32_t op_code, uint32_t funct_code, char **error)
 {
@@ -112,11 +143,11 @@ static size_t find_instruction_by_code(uint32_t op_code, uint32_t funct_code, ch
 
 	for (ins = 0; ins < sizeof(instruction_definitions)
 			/ sizeof(struct instruction_definition); ins++) {
-		if (bin_to_num(instruction_definitions[ins].op_code) != op_code)
+		if (bin_to_num(instruction_definitions[ins].op_code) != op_code) // if equivalent opcode does not exist, skip.
 			continue;
 
-		if (instruction_definitions[ins].type == R_TYPE) {
-			if (bin_to_num(instruction_definitions[ins].funct_code) != funct_code)
+		if (instruction_definitions[ins].type == R_TYPE) { 
+			if (bin_to_num(instruction_definitions[ins].funct_code) != funct_code) // if equivalent function code does not exist, skip.
 				continue;
 		}
 
