@@ -91,8 +91,15 @@ int main(int argc, char *argv[])
 				printf("%s\n\n", decompile_result);
 				break;
 			case DEBUG:
+
+			//Only process if 32 bits
+				if (strlen(line) != 32 || strspn(line, "01") != 32) {
+					printf("Expected exactly 32 binary digits.\n");
+					continue;
+				}
 				// First get the binary input as uint32_t
 				inst_in = strtoul(line, &end, 2);
+
 
 				/* -------------------------------------------------------------------------
 				* BONUS CHALLENGE: Automated Corrupted Code Inspector
@@ -104,10 +111,26 @@ int main(int argc, char *argv[])
 				* 3. Prints out valid MIPS instructions as suggestions.
 				* ------------------------------------------------------------------------- */
 				
-				printf("Broken Binary Received: %s\n", line);
-				printf("Bonus Logic Not Yet Implemented. Returning to Root...\n");
-				int_state = ROOT;
 				
+				printf("Broken Binary Received: %s\n", line);
+
+				// Iterate thru and flip each bit one at a time and print the versions that are valid instructions
+				for (int bit = 0; bit < 32; bit++) {
+					uint32_t flipped = inst_in ^ (1u << bit);
+					parse_result = convert_to_assembly(flipped, &error);
+					if (error != NULL)
+						continue;
+					generate_assembly(decompile_result, LINE_BUFF_SIZE, parse_result, &error);
+					if (error != NULL)
+						continue;
+					// Reassemble a copy (parse_assembly modifies its input) to filter out flips in unused bits
+					char check[LINE_BUFF_SIZE];
+					strcpy(check, decompile_result);
+					result = parse_assembly(check, &error);
+					if (error != NULL || result != flipped)
+						continue;
+					printf("Bit %2d: %s\n", bit, decompile_result);
+				}
 				break;
 
 			case INACTIVE:

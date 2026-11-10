@@ -9,6 +9,7 @@
 
 // TODO: Add in documentation/comments since Old Jim forgot
 
+
 void generate_assembly(char *buf, size_t size, struct assm_parse_result parsed, char **error)
 {
 	// Initialize the error pointer to NULL
